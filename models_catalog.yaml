@@ -1,0 +1,649 @@
+# TraceTranslator Models Catalog
+# Complete reference of all 38 available models
+# Organized by architecture family and purpose
+
+version: "1.0"
+total_models: 38
+device_support:
+  - mps  # Apple Silicon GPU
+  - cuda # NVIDIA GPU
+  - cpu  # CPU fallback
+
+# ============================================================================
+# VISION MODELS - Image Understanding & Classification
+# ============================================================================
+
+vision_models:
+  category: "Image Classification & Feature Extraction"
+  loader_method: "load_vision_model"
+  
+  models:
+    mobilenet_v2:
+      architecture: "MobileNet"
+      family: "CNN"
+      parameters: "3.5M"
+      input_size: [224, 224, 3]
+      output_classes: 1000
+      pretrained_on: "ImageNet"
+      use_case: "Mobile/edge devices, efficient inference"
+      speed: "very_fast"
+      
+    resnet18:
+      architecture: "ResNet"
+      family: "CNN"
+      parameters: "11.7M"
+      input_size: [224, 224, 3]
+      output_classes: 1000
+      pretrained_on: "ImageNet"
+      use_case: "General purpose classification"
+      speed: "fast"
+      
+    efficientnet_b0:
+      architecture: "EfficientNet"
+      family: "CNN"
+      parameters: "5.3M"
+      input_size: [224, 224, 3]
+      output_classes: 1000
+      pretrained_on: "ImageNet"
+      use_case: "Efficient accuracy-speed tradeoff"
+      speed: "fast"
+      
+    vit_tiny:
+      architecture: "Vision Transformer"
+      family: "Transformer"
+      parameters: "5.7M"
+      input_size: [224, 224, 3]
+      output_classes: 1000
+      pretrained_on: "ImageNet"
+      use_case: "Transformer-based vision"
+      speed: "medium"
+
+# ============================================================================
+# LANGUAGE MODELS - Text Understanding & Generation
+# ============================================================================
+
+language_models:
+  category: "Text Understanding & Generation"
+  loader_method: "load_language_model"
+  
+  models:
+    distilbert:
+      architecture: "DistilBERT"
+      family: "BERT"
+      type: "encoder_only"
+      parameters: "66M"
+      max_length: 512
+      embedding_dim: 768
+      pretrained_on: "Wikipedia, BookCorpus"
+      use_case: "Fast text understanding, embeddings"
+      speed: "fast"
+      
+    gpt2-small:
+      architecture: "GPT-2"
+      family: "GPT"
+      type: "decoder_only"
+      parameters: "124M"
+      max_length: 1024
+      embedding_dim: 768
+      vocab_size: 50257
+      pretrained_on: "WebText"
+      use_case: "Text generation, completion"
+      speed: "medium"
+      
+    t5-small:
+      architecture: "T5"
+      family: "T5"
+      type: "encoder_decoder"
+      parameters: "60M"
+      max_length: 512
+      embedding_dim: 512
+      pretrained_on: "C4 dataset"
+      use_case: "Text-to-text tasks, translation"
+      speed: "medium"
+      
+    minilm:
+      architecture: "MiniLM"
+      family: "BERT"
+      type: "encoder_only"
+      parameters: "33M"
+      max_length: 512
+      embedding_dim: 384
+      pretrained_on: "Wikipedia, BookCorpus"
+      use_case: "Compact text understanding"
+      speed: "very_fast"
+
+# ============================================================================
+# MULTIMODAL MODELS - Vision-Language Understanding
+# ============================================================================
+
+multimodal_models:
+  category: "Vision-Language Understanding"
+  loader_method: "load_multimodal_model"
+  
+  models:
+    clip:
+      architecture: "CLIP"
+      family: "Contrastive Learning"
+      type: "dual_encoder"
+      parameters: "~150M"
+      vision_encoder: "ViT-B/32"
+      text_encoder: "Transformer"
+      pretrained_on: "400M image-text pairs"
+      use_case: "Image-text matching, zero-shot classification"
+      output: "similarity_scores"
+      speed: "fast"
+      
+    blip:
+      architecture: "BLIP"
+      family: "Vision-Language"
+      type: "image_text_retrieval"
+      parameters: "~200M"
+      pretrained_on: "COCO, Visual Genome"
+      use_case: "Image-text matching, retrieval"
+      output: "match_probability"
+      speed: "medium"
+
+# ============================================================================
+# AUDIO MODELS - Speech Recognition & Understanding
+# ============================================================================
+
+audio_models:
+  category: "Speech Recognition & Audio Understanding"
+  loader_method: "load_audio_model"
+  
+  models:
+    whisper-tiny:
+      architecture: "Whisper"
+      family: "Transformer"
+      type: "speech_to_text"
+      parameters: "39M"
+      sample_rate: 16000
+      pretrained_on: "680k hours multilingual"
+      languages: 99
+      use_case: "Fast speech transcription"
+      speed: "very_fast"
+      
+    whisper-base:
+      architecture: "Whisper"
+      family: "Transformer"
+      type: "speech_to_text"
+      parameters: "74M"
+      sample_rate: 16000
+      pretrained_on: "680k hours multilingual"
+      languages: 99
+      use_case: "Better accuracy transcription"
+      speed: "fast"
+      
+    wav2vec2:
+      architecture: "Wav2Vec2"
+      family: "Transformer"
+      type: "speech_recognition"
+      parameters: "95M"
+      sample_rate: 16000
+      pretrained_on: "LibriSpeech 960h"
+      use_case: "ASR with CTC decoding"
+      output: "ctc_logits"
+      speed: "medium"
+
+# ============================================================================
+# EMBEDDING MODELS - Semantic Text Representations
+# ============================================================================
+
+embedding_models:
+  category: "Semantic Text Embeddings"
+  loader_method: "load_embedding_model"
+  
+  models:
+    all-MiniLM-L6-v2:
+      architecture: "Sentence-BERT"
+      family: "BERT"
+      base_model: "MiniLM-L6"
+      parameters: "~22M"
+      embedding_dim: 384
+      normalized: true
+      pretrained_on: "1B+ sentence pairs"
+      use_case: "Fast semantic search, clustering"
+      speed: "very_fast"
+      quality: "good"
+      
+    all-mpnet-base-v2:
+      architecture: "Sentence-BERT"
+      family: "MPNet"
+      base_model: "MPNet-base"
+      parameters: "~110M"
+      embedding_dim: 768
+      normalized: true
+      pretrained_on: "1B+ sentence pairs"
+      use_case: "High-quality semantic search"
+      speed: "medium"
+      quality: "best"
+      
+    paraphrase-MiniLM:
+      architecture: "Sentence-BERT"
+      family: "BERT"
+      base_model: "MiniLM-L6"
+      parameters: "~22M"
+      embedding_dim: 384
+      normalized: false
+      pretrained_on: "Paraphrase datasets"
+      use_case: "Paraphrase detection"
+      speed: "very_fast"
+      quality: "good"
+
+# ============================================================================
+# DIFFUSION MODELS - Image Generation
+# ============================================================================
+
+diffusion_models:
+  category: "Text-to-Image Generation"
+  loader_method: "load_diffusion_model"
+  
+  models:
+    sd-turbo:
+      architecture: "Stable Diffusion Turbo"
+      family: "Diffusion"
+      type: "text_to_image"
+      parameters: "~1B"
+      size_gb: 2
+      steps: [1, 2, 3, 4]
+      resolution: [512, 512]
+      pretrained_on: "LAION-5B"
+      use_case: "Ultra-fast image generation"
+      speed: "very_fast"
+      quality: "good"
+      
+    sdxl-turbo:
+      architecture: "Stable Diffusion XL Turbo"
+      family: "Diffusion"
+      type: "text_to_image"
+      parameters: "~3.5B"
+      size_gb: 7
+      steps: [1, 2, 3, 4]
+      resolution: [1024, 1024]
+      pretrained_on: "LAION-5B"
+      use_case: "High-quality fast generation"
+      speed: "fast"
+      quality: "excellent"
+      
+    lcm:
+      architecture: "Latent Consistency Model"
+      family: "Diffusion"
+      type: "text_to_image"
+      parameters: "~1B"
+      size_gb: 2
+      steps: [4, 6, 8]
+      resolution: [512, 512]
+      pretrained_on: "Stable Diffusion distillation"
+      use_case: "Fast consistent generation"
+      speed: "fast"
+      quality: "good"
+
+# ============================================================================
+# REASONING MODELS - Small Language Models for Reasoning
+# ============================================================================
+
+reasoning_models:
+  category: "Small Reasoning Language Models"
+  loader_method: "load_reasoning_model"
+  
+  models:
+    phi-2:
+      architecture: "Phi-2"
+      family: "Transformer"
+      type: "causal_lm"
+      parameters: "2.7B"
+      context_length: 2048
+      vocab_size: 51200
+      developer: "Microsoft"
+      pretrained_on: "Textbooks, web, code"
+      use_case: "Reasoning, math, coding"
+      speed: "fast"
+      quality: "excellent"
+      
+    tinyllama:
+      architecture: "TinyLlama"
+      family: "LLaMA"
+      type: "causal_lm"
+      parameters: "1.1B"
+      context_length: 2048
+      vocab_size: 32000
+      pretrained_on: "3T tokens (SlimPajama, StarCoder)"
+      use_case: "Compact chat and reasoning"
+      speed: "very_fast"
+      quality: "good"
+      
+    phi-3-mini:
+      architecture: "Phi-3-Mini"
+      family: "Transformer"
+      type: "causal_lm"
+      parameters: "3.8B"
+      context_length: 4096
+      vocab_size: 32064
+      developer: "Microsoft"
+      pretrained_on: "High-quality filtered data"
+      use_case: "Advanced reasoning, long context"
+      speed: "medium"
+      quality: "excellent"
+
+# ============================================================================
+# MOLECULAR MODELS - Chemistry & Drug Discovery
+# ============================================================================
+
+molecular_models:
+  category: "Molecular Property Prediction"
+  loader_method: "load_molecular_model"
+  
+  models:
+    chemberta:
+      architecture: "ChemBERTa"
+      family: "BERT"
+      type: "encoder_only"
+      parameters: "~110M"
+      input_format: "SMILES"
+      pretrained_on: "ZINC-15 (77M molecules)"
+      use_case: "Molecular property prediction"
+      tasks: ["toxicity", "solubility", "binding"]
+      
+    molformer:
+      architecture: "MoLFormer"
+      family: "Transformer"
+      type: "encoder_only"
+      parameters: "~47M"
+      input_format: "SMILES"
+      pretrained_on: "1.1B molecules"
+      use_case: "Large-scale molecular modeling"
+      tasks: ["property_prediction", "generation"]
+
+# ============================================================================
+# GRAPH NEURAL NETWORKS - Graph Structure Learning
+# ============================================================================
+
+gnn_models:
+  category: "Graph Neural Networks"
+  loader_method: "load_gnn_model"
+  note: "Returns architecture classes, not pre-trained models"
+  
+  models:
+    gcn:
+      architecture: "Graph Convolutional Network"
+      family: "GNN"
+      type: "spectral"
+      paper: "Kipf & Welling (2017)"
+      use_case: "Node classification, graph classification"
+      aggregation: "mean"
+      
+    gat:
+      architecture: "Graph Attention Network"
+      family: "GNN"
+      type: "attention_based"
+      paper: "Veličković et al. (2018)"
+      use_case: "Node classification with attention"
+      aggregation: "attention_weighted"
+      
+    graphsage:
+      architecture: "GraphSAGE"
+      family: "GNN"
+      type: "sampling_based"
+      paper: "Hamilton et al. (2017)"
+      use_case: "Inductive learning, large graphs"
+      aggregation: "mean/pool/lstm"
+
+# ============================================================================
+# ADVANCED MULTIMODAL - Vision-Language Generation
+# ============================================================================
+
+advanced_multimodal_models:
+  category: "Advanced Vision-Language Models"
+  loader_method: "load_advanced_multimodal"
+  
+  models:
+    blip2:
+      architecture: "BLIP-2"
+      family: "Vision-Language"
+      type: "visual_question_answering"
+      parameters: "2.7B"
+      vision_encoder: "ViT-L"
+      language_model: "OPT-2.7B"
+      pretrained_on: "129M images"
+      use_case: "VQA, image captioning, chat"
+      speed: "medium"
+      
+    llava-tiny:
+      architecture: "LLaVA-Tiny"
+      family: "Vision-Language"
+      type: "multimodal_chat"
+      parameters: "3.1B"
+      vision_encoder: "SigLIP"
+      language_model: "Phi-2"
+      use_case: "Vision-language conversations"
+      speed: "fast"
+
+# ============================================================================
+# AUDIO GENERATION - Music & Sound Synthesis
+# ============================================================================
+
+audio_generation_models:
+  category: "Audio & Music Generation"
+  loader_method: "load_audio_generation_model"
+  
+  models:
+    musicgen:
+      architecture: "MusicGen"
+      family: "Transformer"
+      type: "text_to_music"
+      parameters: "~300M"
+      sample_rate: 32000
+      duration: "up to 30s"
+      developer: "Meta"
+      pretrained_on: "20k hours licensed music"
+      use_case: "Music generation from text"
+      output_format: "audio"
+      
+    audioldm:
+      architecture: "AudioLDM"
+      family: "Diffusion"
+      type: "text_to_audio"
+      parameters: "~400M"
+      sample_rate: 16000
+      duration: "up to 10s"
+      pretrained_on: "AudioCaps, AudioSet"
+      use_case: "Sound effects, audio generation"
+      output_format: "audio"
+
+# ============================================================================
+# CODE MODELS - Programming Language Understanding
+# ============================================================================
+
+code_models:
+  category: "Code Understanding & Generation"
+  loader_method: "load_code_model"
+  
+  models:
+    codebert:
+      architecture: "CodeBERT"
+      family: "BERT"
+      type: "encoder_only"
+      parameters: "125M"
+      languages: ["Python", "Java", "JavaScript", "PHP", "Ruby", "Go"]
+      pretrained_on: "CodeSearchNet (2M functions)"
+      use_case: "Code search, understanding"
+      tasks: ["search", "clone_detection", "summarization"]
+      
+    codet5-small:
+      architecture: "CodeT5"
+      family: "T5"
+      type: "encoder_decoder"
+      parameters: "60M"
+      languages: ["Python", "Java", "JavaScript", "PHP", "Ruby", "Go", "C", "C++"]
+      pretrained_on: "CodeSearchNet + GitHub"
+      use_case: "Code generation, translation, summarization"
+      tasks: ["generation", "translation", "summarization", "refinement"]
+
+# ============================================================================
+# ADVANCED VISION - Specialized Vision Tasks
+# ============================================================================
+
+advanced_vision_models:
+  category: "Advanced Vision Tasks"
+  loader_method: "load_advanced_vision_model"
+  
+  models:
+    dinov2:
+      architecture: "DINOv2"
+      family: "Vision Transformer"
+      type: "self_supervised"
+      parameters: "~22M"
+      patch_size: 14
+      embedding_dim: 384
+      developer: "Meta"
+      pretrained_on: "142M images (curated)"
+      use_case: "Feature extraction, transfer learning"
+      quality: "sota"
+      
+    sam:
+      architecture: "Segment Anything Model"
+      family: "Vision Transformer"
+      type: "segmentation"
+      parameters: "~90M"
+      input_size: [1024, 1024]
+      developer: "Meta"
+      pretrained_on: "SA-1B (11M images, 1B masks)"
+      use_case: "Universal image segmentation"
+      prompt_types: ["point", "box", "mask"]
+      
+    depth-anything:
+      architecture: "Depth Anything"
+      family: "Vision Transformer"
+      type: "depth_estimation"
+      parameters: "~25M"
+      input_size: [518, 518]
+      pretrained_on: "1.5M images"
+      use_case: "Monocular depth estimation"
+      output: "depth_map"
+
+# ============================================================================
+# OBJECT DETECTION - Real-time Detection
+# ============================================================================
+
+object_detection_models:
+  category: "Object Detection"
+  loader_method: "load_object_detection_model"
+  
+  models:
+    yolo:
+      architecture: "YOLOv8-nano"
+      family: "YOLO"
+      type: "real_time_detection"
+      parameters: "3.2M"
+      size_mb: 6
+      input_size: [640, 640]
+      classes: 80
+      pretrained_on: "COCO"
+      use_case: "Real-time object detection"
+      speed: "very_fast"
+      fps: "100+"
+      
+    detr:
+      architecture: "DETR"
+      family: "Transformer"
+      type: "end_to_end_detection"
+      parameters: "~41M"
+      size_mb: 160
+      backbone: "ResNet-50"
+      pretrained_on: "COCO"
+      use_case: "Transformer-based detection"
+      speed: "medium"
+      classes: 91
+
+# ============================================================================
+# MODEL FAMILIES SUMMARY
+# ============================================================================
+
+model_families:
+  cnn:
+    count: 3
+    models: ["mobilenet_v2", "resnet18", "efficientnet_b0"]
+    
+  transformer:
+    count: 15
+    models: ["vit_tiny", "distilbert", "gpt2-small", "t5-small", "minilm", 
+             "clip", "whisper-tiny", "whisper-base", "wav2vec2", "phi-2", 
+             "tinyllama", "phi-3-mini", "detr", "dinov2", "sam"]
+    
+  diffusion:
+    count: 4
+    models: ["sd-turbo", "sdxl-turbo", "lcm", "audioldm"]
+    
+  bert_family:
+    count: 7
+    models: ["distilbert", "minilm", "all-MiniLM-L6-v2", "all-mpnet-base-v2", 
+             "paraphrase-MiniLM", "chemberta", "codebert"]
+    
+  gnn:
+    count: 3
+    models: ["gcn", "gat", "graphsage"]
+    
+  vision_language:
+    count: 4
+    models: ["clip", "blip", "blip2", "llava-tiny"]
+
+# ============================================================================
+# USE CASE INDEX
+# ============================================================================
+
+use_cases:
+  image_classification:
+    models: ["mobilenet_v2", "resnet18", "efficientnet_b0", "vit_tiny"]
+    
+  text_understanding:
+    models: ["distilbert", "minilm", "all-MiniLM-L6-v2", "all-mpnet-base-v2"]
+    
+  text_generation:
+    models: ["gpt2-small", "phi-2", "tinyllama", "phi-3-mini"]
+    
+  image_generation:
+    models: ["sd-turbo", "sdxl-turbo", "lcm"]
+    
+  speech_recognition:
+    models: ["whisper-tiny", "whisper-base", "wav2vec2"]
+    
+  vision_language:
+    models: ["clip", "blip", "blip2", "llava-tiny"]
+    
+  code_tasks:
+    models: ["codebert", "codet5-small"]
+    
+  molecular_tasks:
+    models: ["chemberta", "molformer"]
+    
+  object_detection:
+    models: ["yolo", "detr"]
+    
+  segmentation:
+    models: ["sam"]
+    
+  depth_estimation:
+    models: ["depth-anything"]
+    
+  audio_generation:
+    models: ["musicgen", "audioldm"]
+    
+  semantic_search:
+    models: ["all-MiniLM-L6-v2", "all-mpnet-base-v2"]
+    
+  feature_extraction:
+    models: ["dinov2", "clip"]
+
+# ============================================================================
+# METADATA
+# ============================================================================
+
+metadata:
+  created: "2025-11-13"
+  framework: "PyTorch"
+  device_support: ["mps", "cuda", "cpu"]
+  precision: ["fp32", "fp16"]
+  format: "safetensors"
+  auto_download: true
+  cache_location: "~/.cache/"
+
