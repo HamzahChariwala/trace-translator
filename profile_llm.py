@@ -47,7 +47,7 @@ et_observer.start()
 
 # Profile - the ExecutionTraceObserver runs in parallel
 with torch.profiler.profile(
-    activities=[torch.profiler.ProfilerActivity.CPU],
+    activities=[torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA],
     schedule=torch.profiler.schedule(
         wait=WAIT_STEPS,
         warmup=WARMUP_STEPS,
