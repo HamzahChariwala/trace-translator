@@ -4,7 +4,9 @@ Profile a small LLM using PyTorch Profiler for Chakra trace collection.
 
 import torch
 import torch.profiler
+from torch.profiler import ExecutionTraceObserver
 from model_loader import ModelLoader
+import os
 
 # ============================================================================
 # CONFIGURATION - Adjust these to control trace size
@@ -21,6 +23,7 @@ ACTIVE_STEPS = 1                   # Number of iterations to actively profile
 TOTAL_ITERATIONS = 2               # Total forward passes (must be >= wait + warmup + active)
 
 OUTPUT_DIR = './traces'            # Where to save trace files
+CHAKRA_ET_OUTPUT = './chakra_et'   # Where to save Chakra ET format traces
 
 # ============================================================================
 
@@ -36,7 +39,13 @@ inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
 # The model processes all tokens in the prompt in one forward pass
 # To profile generation (producing new tokens), use model.generate() instead of model(**inputs)
 
-# Profile
+# Create ExecutionTraceObserver to generate Chakra ET format
+# Start it manually before profiling
+et_observer = ExecutionTraceObserver()
+et_observer.register_callback(CHAKRA_ET_OUTPUT + ".json")
+et_observer.start()
+
+# Profile - the ExecutionTraceObserver runs in parallel
 with torch.profiler.profile(
     activities=[torch.profiler.ProfilerActivity.CPU],
     schedule=torch.profiler.schedule(
@@ -55,4 +64,9 @@ with torch.profiler.profile(
             model(**inputs)
         prof.step()
 
-print(f"Trace saved to {OUTPUT_DIR}/")
+# Stop the ExecutionTraceObserver
+et_observer.stop()
+et_observer.unregister_callback()
+
+print(f"Kineto trace saved to {OUTPUT_DIR}/")
+print(f"Chakra ET trace saved to {et_observer.get_output_file_path()}")
