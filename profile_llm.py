@@ -13,7 +13,7 @@ import os
 # ============================================================================
 
 MODEL_NAME = "tinyllama"           # Which model to profile
-DEVICE = "cpu"                     # Device: 'cpu', 'cuda', or 'mps'
+DEVICE = "cuda"                     # Device: 'cpu', 'cuda', or 'mps'
 INPUT_PROMPT = "Tell me about the corpus callosum."  # Input text
 
 # Profiling schedule parameters (control trace size)
