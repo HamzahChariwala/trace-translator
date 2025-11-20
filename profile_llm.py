@@ -5,7 +5,7 @@ Profile a small LLM using PyTorch Profiler for Chakra trace collection.
 import torch
 import torch.profiler
 from torch.profiler import ExecutionTraceObserver
-from model_loader import ModelLoader
+from model_tooling.model_loader import ModelLoader
 import os
 
 # ============================================================================
@@ -14,16 +14,16 @@ import os
 
 MODEL_NAME = "tinyllama"           # Which model to profile
 DEVICE = "cpu"                     # Device: 'cpu', 'cuda', or 'mps'
-INPUT_PROMPT = "The quick brown fox jumps over the lazy dog."  # Input text
+INPUT_PROMPT = "Tell me about the corpus callosum."  # Input text
 
 # Profiling schedule parameters (control trace size)
 WAIT_STEPS = 1                     # Skip first N iterations (not profiled)
-WARMUP_STEPS = 0                   # Warmup iterations (profiled but marked as warmup)
+WARMUP_STEPS = 1                   # Warmup iterations (profiled but marked as warmup)
 ACTIVE_STEPS = 1                   # Number of iterations to actively profile
-TOTAL_ITERATIONS = 2               # Total forward passes (must be >= wait + warmup + active)
+TOTAL_ITERATIONS = 3               # Total forward passes (must be >= wait + warmup + active)
 
 OUTPUT_DIR = './traces'            # Where to save trace files
-CHAKRA_ET_OUTPUT = './chakra_et'   # Where to save Chakra ET format traces
+CHAKRA_ET_OUTPUT = './CPU_trace'   # Where to save Chakra ET format traces
 
 # ============================================================================
 
@@ -66,7 +66,8 @@ with torch.profiler.profile(
 
 # Stop the ExecutionTraceObserver
 et_observer.stop()
+output_file = et_observer.get_output_file_path()
 et_observer.unregister_callback()
 
 print(f"Kineto trace saved to {OUTPUT_DIR}/")
-print(f"Chakra ET trace saved to {et_observer.get_output_file_path()}")
+print(f"Chakra ET trace saved to {output_file}")
