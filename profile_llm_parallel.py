@@ -13,7 +13,7 @@ import os
 # CONFIGURATION
 # ============================================================================
 
-MODEL_NAME = "llama-2-13b"         # Options: 'phi-2', 'tinyllama', 'phi-3-mini', 'llama-2-13b', 'mistral-7b', or HF model path
+MODEL_NAME = "mistral-7b"          # Options: 'phi-2', 'tinyllama', 'phi-3-mini', 'llama-2-13b', 'mistral-7b', or HF model path
 INPUT_PROMPT = "Tell me about the corpus callosum."
 
 MAX_MEMORY_PER_GPU = {0: "12GB", 1: "12GB", 2: "12GB", 3: "12GB"}
