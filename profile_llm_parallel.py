@@ -123,6 +123,7 @@ with torch.profiler.profile(
     profile_memory=True,
     with_stack=True,
     with_flops=True,
+    with_modules=True,  # Capture module hierarchy information
     experimental_config=torch._C._profiler._ExperimentalConfig(
         verbose=True,
         enable_cuda_sync_events=True  # Enable CUDA sync events for multi-GPU
@@ -137,6 +138,9 @@ with torch.profiler.profile(
                 pad_token_id=tokenizer.eos_token_id
             )
     prof.step()  # Mark step boundary
+    
+    # TODO: Export Chrome trace format for more detailed analysis (larger file size)
+    # prof.export_chrome_trace(f"{OUTPUT_DIR}/chrome_trace.json")
 
 et_observer.stop()
 output_file = et_observer.get_output_file_path()
