@@ -117,18 +117,26 @@ et_observer.start()
 
 with torch.profiler.profile(
     activities=[torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA],
+    schedule=torch.profiler.schedule(wait=0, warmup=0, active=1, repeat=1),
     on_trace_ready=torch.profiler.tensorboard_trace_handler(OUTPUT_DIR),
     record_shapes=True,
     profile_memory=True,
     with_stack=True,
+    with_flops=True,
+    experimental_config=torch._C._profiler._ExperimentalConfig(
+        verbose=True,
+        enable_cuda_sync_events=True  # Enable CUDA sync events for multi-GPU
+    )
 ) as prof:
-    with torch.no_grad():
-        profiled_ids = model.generate(
-            input_ids=warmup_ids,  # Continue from warmup
-            max_new_tokens=PROFILED_TOKENS,
-            do_sample=False,
-            pad_token_id=tokenizer.eos_token_id
-        )
+    with torch.profiler.record_function("ProfilerStep#0"):  # Add ProfilerStep annotation
+        with torch.no_grad():
+            profiled_ids = model.generate(
+                input_ids=warmup_ids,  # Continue from warmup
+                max_new_tokens=PROFILED_TOKENS,
+                do_sample=False,
+                pad_token_id=tokenizer.eos_token_id
+            )
+    prof.step()  # Mark step boundary
 
 et_observer.stop()
 output_file = et_observer.get_output_file_path()
