@@ -80,7 +80,7 @@ def test_multiprocessing_spawn():
         print(f"Error during spawn: {e}")
 
 
-def worker_dataparallel():
+def test_dataparallel():
     """Test 3: Check if DataParallel creates new processes"""
     print_separator("TEST 3: torch.nn.DataParallel")
     
