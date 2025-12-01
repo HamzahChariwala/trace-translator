@@ -16,6 +16,7 @@ from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp import ShardingStrategy
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import os
+import functools
 
 # ============================================================================
 # CONFIGURATION
@@ -100,10 +101,10 @@ tokenizer = AutoTokenizer.from_pretrained(hf_model_name, trust_remote_code=True)
 if tokenizer.pad_token is None:
     tokenizer.pad_token = tokenizer.eos_token
 
-# Load model on CPU first, then wrap with FSDP
-# FSDP will handle moving and sharding to GPU
+# Load model and move to GPU before FSDP wrapping
+# This avoids embedding layer initialization issues
 if rank == 0:
-    print(f"  Loading model on CPU...")
+    print(f"  Loading model and moving to GPU {rank}...")
 
 model = AutoModelForCausalLM.from_pretrained(
     hf_model_name,
@@ -112,8 +113,25 @@ model = AutoModelForCausalLM.from_pretrained(
     low_cpu_mem_usage=True
 )
 
+# Move model to GPU BEFORE wrapping with FSDP
+# This ensures all parameters are properly initialized
+model = model.to(f"cuda:{rank}")
+
 if rank == 0:
     print(f"  Wrapping model with FSDP...")
+
+# Import FSDP wrapping utilities
+from torch.distributed.fsdp.wrap import (
+    transformer_auto_wrap_policy,
+    size_based_auto_wrap_policy,
+)
+
+# Use size-based wrapping policy to avoid embedding issues
+# This wraps modules larger than min_num_params
+my_auto_wrap_policy = functools.partial(
+    size_based_auto_wrap_policy,
+    min_num_params=1e6,  # Wrap modules with >1M parameters
+)
 
 # Wrap model with FSDP
 # FULL_SHARD strategy:
@@ -121,13 +139,12 @@ if rank == 0:
 # - Each GPU owns 1/N of the parameters
 # - Forward pass: AllGather parameters before each layer, then discard
 # - This creates rich communication patterns ideal for profiling
-#
-# Note: Not using use_orig_params=True due to compatibility issues with phi-2
-# Generation still works, just uses FSDP's flattened parameters
 model = FSDP(
     model,
+    auto_wrap_policy=my_auto_wrap_policy,
     sharding_strategy=ShardingStrategy.FULL_SHARD,
     device_id=torch.cuda.current_device(),
+    sync_module_states=True,  # Sync model states across all ranks
 )
 
 # Set to evaluation mode

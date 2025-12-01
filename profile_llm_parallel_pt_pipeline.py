@@ -173,8 +173,17 @@ for stage, (start_layer, end_layer) in layer_distribution.items():
         model.model.layers[layer_idx] = model.model.layers[layer_idx].to(f"cuda:{stage}")
 
 # Final norm and LM head on last GPU
+# Different models use different layer names
 last_gpu = world_size - 1
-model.model.norm = model.model.norm.to(f"cuda:{last_gpu}")
+
+# Handle different model architectures
+if hasattr(model.model, 'norm'):
+    # Llama, Mistral models
+    model.model.norm = model.model.norm.to(f"cuda:{last_gpu}")
+elif hasattr(model.model, 'final_layernorm'):
+    # Phi models
+    model.model.final_layernorm = model.model.final_layernorm.to(f"cuda:{last_gpu}")
+
 model.lm_head = model.lm_head.to(f"cuda:{last_gpu}")
 
 # Set to evaluation mode
