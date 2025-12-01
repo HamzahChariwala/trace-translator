@@ -21,9 +21,9 @@ import os
 # CONFIGURATION
 # ============================================================================
 
-MODEL_NAME = "phi-2"               # Options: 'phi-2', 'tinyllama', 'phi-3-mini', 'llama-2-13b', 'mistral-7b', or HF model path
-                                   # Note: Using phi-2 (2.7B) by default to avoid OOM on 14GB GPUs
-                                   # FSDP still shows same communication patterns with smaller models
+MODEL_NAME = "tinyllama"           # Options: 'phi-2', 'tinyllama', 'phi-3-mini', 'llama-2-13b', 'mistral-7b', or HF model path
+                                   # Note: Using tinyllama (1.1B) - phi-2 has FSDP compatibility issues
+                                   # TinyLlama works perfectly with FSDP and shows same communication patterns
 INPUT_PROMPT = "Tell me about the corpus callosum."
 
 # FSDP Configuration
