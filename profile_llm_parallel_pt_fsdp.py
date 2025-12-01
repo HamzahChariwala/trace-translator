@@ -121,10 +121,12 @@ if rank == 0:
 # - Each GPU owns 1/N of the parameters
 # - Forward pass: AllGather parameters before each layer, then discard
 # - This creates rich communication patterns ideal for profiling
+#
+# Note: Not using use_orig_params=True due to compatibility issues with phi-2
+# Generation still works, just uses FSDP's flattened parameters
 model = FSDP(
     model,
     sharding_strategy=ShardingStrategy.FULL_SHARD,
-    use_orig_params=True,  # Critical for model.generate() to work!
     device_id=torch.cuda.current_device(),
 )
 
