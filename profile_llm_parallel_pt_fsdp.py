@@ -101,21 +101,24 @@ tokenizer = AutoTokenizer.from_pretrained(hf_model_name, trust_remote_code=True)
 if tokenizer.pad_token is None:
     tokenizer.pad_token = tokenizer.eos_token
 
-# Load model on CPU, let FSDP handle GPU placement
+# For FSDP with TinyLlama, we need to be careful about initialization
+# Load model directly to current device to avoid embedding issues
 if rank == 0:
-    print(f"  Loading model on CPU...")
+    print(f"  Loading model directly to GPU {rank}...")
 
+# Load model with device_map to current GPU
+# This avoids the embedding layer issues we've been seeing
 model = AutoModelForCausalLM.from_pretrained(
     hf_model_name,
     torch_dtype=torch.float16,
     trust_remote_code=True,
-    low_cpu_mem_usage=True
+    device_map={"": f"cuda:{rank}"},  # Load everything to current GPU
 )
 
 if rank == 0:
-    print(f"  Wrapping model with FSDP (will move to GPU during wrapping)...")
+    print(f"  Wrapping model with FSDP...")
 
-# Wrap model with FSDP - it will handle moving to GPU
+# Wrap model with FSDP
 # FULL_SHARD strategy:
 # - Shards parameters, gradients, and optimizer states across all GPUs
 # - Each GPU owns 1/N of the parameters
@@ -125,7 +128,7 @@ model = FSDP(
     model,
     sharding_strategy=ShardingStrategy.FULL_SHARD,
     device_id=torch.cuda.current_device(),
-    cpu_offload=None,  # Keep everything on GPU
+    sync_module_states=True,  # Sync initial states across ranks
 )
 
 # Set to evaluation mode
