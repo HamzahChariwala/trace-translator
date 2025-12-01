@@ -163,11 +163,10 @@ for stage in range(world_size):
         print(f"    Stage {stage} (GPU {stage}): Layers {start_layer}-{end_layer-1}")
 
 # Move model components to appropriate devices
-# Embedding layer on first GPU
-if rank == 0:
-    model.model.embed_tokens = model.model.embed_tokens.to("cuda:0")
+# Embedding layer on first GPU (all ranks need to do this)
+model.model.embed_tokens = model.model.embed_tokens.to("cuda:0")
 
-# Distribute transformer layers
+# Distribute transformer layers (all ranks do this)
 for stage, (start_layer, end_layer) in layer_distribution.items():
     for layer_idx in range(start_layer, end_layer):
         model.model.layers[layer_idx] = model.model.layers[layer_idx].to(f"cuda:{stage}")

@@ -101,10 +101,9 @@ tokenizer = AutoTokenizer.from_pretrained(hf_model_name, trust_remote_code=True)
 if tokenizer.pad_token is None:
     tokenizer.pad_token = tokenizer.eos_token
 
-# Load model and move to GPU before FSDP wrapping
-# This avoids embedding layer initialization issues
+# Load model on CPU, let FSDP handle GPU placement
 if rank == 0:
-    print(f"  Loading model and moving to GPU {rank}...")
+    print(f"  Loading model on CPU...")
 
 model = AutoModelForCausalLM.from_pretrained(
     hf_model_name,
@@ -113,27 +112,10 @@ model = AutoModelForCausalLM.from_pretrained(
     low_cpu_mem_usage=True
 )
 
-# Move model to GPU BEFORE wrapping with FSDP
-# This ensures all parameters are properly initialized
-model = model.to(f"cuda:{rank}")
-
 if rank == 0:
-    print(f"  Wrapping model with FSDP...")
+    print(f"  Wrapping model with FSDP (will move to GPU during wrapping)...")
 
-# Import FSDP wrapping utilities
-from torch.distributed.fsdp.wrap import (
-    transformer_auto_wrap_policy,
-    size_based_auto_wrap_policy,
-)
-
-# Use size-based wrapping policy to avoid embedding issues
-# This wraps modules larger than min_num_params
-my_auto_wrap_policy = functools.partial(
-    size_based_auto_wrap_policy,
-    min_num_params=1e6,  # Wrap modules with >1M parameters
-)
-
-# Wrap model with FSDP
+# Wrap model with FSDP - it will handle moving to GPU
 # FULL_SHARD strategy:
 # - Shards parameters, gradients, and optimizer states across all GPUs
 # - Each GPU owns 1/N of the parameters
@@ -141,10 +123,9 @@ my_auto_wrap_policy = functools.partial(
 # - This creates rich communication patterns ideal for profiling
 model = FSDP(
     model,
-    auto_wrap_policy=my_auto_wrap_policy,
     sharding_strategy=ShardingStrategy.FULL_SHARD,
     device_id=torch.cuda.current_device(),
-    sync_module_states=True,  # Sync model states across all ranks
+    cpu_offload=None,  # Keep everything on GPU
 )
 
 # Set to evaluation mode
