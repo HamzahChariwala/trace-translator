@@ -19,7 +19,9 @@ import os
 # CONFIGURATION
 # ============================================================================
 
-MODEL_NAME = "mistral-7b"          # Options: 'phi-2', 'tinyllama', 'phi-3-mini', 'llama-2-13b', 'mistral-7b', or HF model path
+MODEL_NAME = "phi-2"               # Options: 'phi-2', 'tinyllama', 'phi-3-mini', 'llama-2-13b', 'mistral-7b', or HF model path
+                                   # Note: Using phi-2 (2.7B) by default for DeepSpeed to avoid OOM on 14GB GPUs
+                                   # Change to "mistral-7b" if you have more GPU memory
 INPUT_PROMPT = "Tell me about the corpus callosum."
 
 # DeepSpeed ZeRO-3 Configuration
@@ -117,6 +119,11 @@ def get_ds_config(strategy):
                 "stage3_max_reuse_distance": 1e9,
                 "stage3_prefetch_bucket_size": 5e7,
                 "stage3_param_persistence_threshold": 1e5,
+                # Memory-saving options for inference
+                "reduce_bucket_size": 5e7,
+                "allgather_bucket_size": 5e7,
+                "overlap_comm": True,
+                "contiguous_gradients": True,
             },
             "zero_allow_untested_optimizer": True,
             "wall_clock_breakdown": False,  # Disable DeepSpeed's internal profiling
