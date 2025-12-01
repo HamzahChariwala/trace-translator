@@ -101,18 +101,17 @@ tokenizer = AutoTokenizer.from_pretrained(hf_model_name, trust_remote_code=True)
 if tokenizer.pad_token is None:
     tokenizer.pad_token = tokenizer.eos_token
 
-# For FSDP with TinyLlama, we need to be careful about initialization
-# Load model directly to current device to avoid embedding issues
+# For FSDP, we must load on CPU first, then let FSDP handle device placement
+# Loading directly to GPU causes embedding layer initialization issues
 if rank == 0:
-    print(f"  Loading model directly to GPU {rank}...")
+    print(f"  Loading model on CPU first...")
 
-# Load model with device_map to current GPU
-# This avoids the embedding layer issues we've been seeing
+# Load model on CPU - FSDP will handle moving to GPU
 model = AutoModelForCausalLM.from_pretrained(
     hf_model_name,
     torch_dtype=torch.float16,
     trust_remote_code=True,
-    device_map={"": f"cuda:{rank}"},  # Load everything to current GPU
+    low_cpu_mem_usage=True,
 )
 
 if rank == 0:
@@ -129,6 +128,7 @@ model = FSDP(
     sharding_strategy=ShardingStrategy.FULL_SHARD,
     device_id=torch.cuda.current_device(),
     sync_module_states=True,  # Sync initial states across ranks
+    use_orig_params=False,  # Use flattened parameters for better FSDP compatibility
 )
 
 # Set to evaluation mode

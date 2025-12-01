@@ -8,6 +8,7 @@ Data flows sequentially through stages.
 This is essentially the same as HuggingFace's device_map="auto" but with explicit control.
 
 Launch with: python profile_llm_parallel_pt_pipeline.py
+             (NOT torchrun - this is a single process script!)
 
 Note: This runs as a single process (like HF), not distributed like FSDP/TP.
 """
@@ -140,10 +141,10 @@ for stage in range(world_size):
     print(f"    Stage {stage} (GPU {stage}): Layers {start_layer}-{end_layer-1}")
 
 # Move model components to appropriate devices
-# Embedding layer on first GPU (all ranks need to do this)
+# Embedding layer on first GPU
 model.model.embed_tokens = model.model.embed_tokens.to("cuda:0")
 
-# Distribute transformer layers (all ranks do this)
+# Distribute transformer layers
 for stage, (start_layer, end_layer) in layer_distribution.items():
     for layer_idx in range(start_layer, end_layer):
         model.model.layers[layer_idx] = model.model.layers[layer_idx].to(f"cuda:{stage}")
@@ -161,6 +162,35 @@ elif hasattr(model.model, 'final_layernorm'):
     model.model.final_layernorm = model.model.final_layernorm.to(f"cuda:{last_gpu}")
 
 model.lm_head = model.lm_head.to(f"cuda:{last_gpu}")
+
+# ============================================================================
+# ADD FORWARD HOOKS FOR CROSS-DEVICE TENSOR MOVEMENT
+# ============================================================================
+# When layers are on different devices, we need to ensure tensors are moved
+# to the correct device before each layer processes them.
+
+def create_layer_hook(target_device):
+    """Create a forward pre-hook that moves inputs to the target device."""
+    def hook(module, inputs):
+        # Move all tensor inputs to the target device
+        new_inputs = []
+        for inp in inputs:
+            if isinstance(inp, torch.Tensor):
+                new_inputs.append(inp.to(target_device))
+            elif isinstance(inp, tuple):
+                new_inputs.append(tuple(x.to(target_device) if isinstance(x, torch.Tensor) else x for x in inp))
+            else:
+                new_inputs.append(inp)
+        return tuple(new_inputs) if len(new_inputs) > 1 else new_inputs[0]
+    return hook
+
+# Register hooks for each layer to move inputs to the correct device
+for stage, (start_layer, end_layer) in layer_distribution.items():
+    target_device = f"cuda:{stage}"
+    for layer_idx in range(start_layer, end_layer):
+        model.model.layers[layer_idx].register_forward_pre_hook(
+            create_layer_hook(target_device)
+        )
 
 # Set to evaluation mode
 model.eval()
