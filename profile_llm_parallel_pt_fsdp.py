@@ -21,7 +21,9 @@ import os
 # CONFIGURATION
 # ============================================================================
 
-MODEL_NAME = "mistral-7b"          # Options: 'phi-2', 'tinyllama', 'phi-3-mini', 'llama-2-13b', 'mistral-7b', or HF model path
+MODEL_NAME = "phi-2"               # Options: 'phi-2', 'tinyllama', 'phi-3-mini', 'llama-2-13b', 'mistral-7b', or HF model path
+                                   # Note: Using phi-2 (2.7B) by default to avoid OOM on 14GB GPUs
+                                   # FSDP still shows same communication patterns with smaller models
 INPUT_PROMPT = "Tell me about the corpus callosum."
 
 # FSDP Configuration
@@ -98,8 +100,8 @@ tokenizer = AutoTokenizer.from_pretrained(hf_model_name, trust_remote_code=True)
 if tokenizer.pad_token is None:
     tokenizer.pad_token = tokenizer.eos_token
 
-# Load model on CPU first, then move to GPU and wrap with FSDP
-# This is memory-efficient for large models
+# Load model on CPU first, then wrap with FSDP
+# FSDP will handle moving and sharding to GPU
 if rank == 0:
     print(f"  Loading model on CPU...")
 
@@ -107,13 +109,8 @@ model = AutoModelForCausalLM.from_pretrained(
     hf_model_name,
     torch_dtype=torch.float16,
     trust_remote_code=True,
-    low_cpu_mem_usage=True  # Important for large models
+    low_cpu_mem_usage=True
 )
-
-if rank == 0:
-    print(f"  Moving model to GPU {rank}...")
-
-model = model.to(f"cuda:{rank}")
 
 if rank == 0:
     print(f"  Wrapping model with FSDP...")

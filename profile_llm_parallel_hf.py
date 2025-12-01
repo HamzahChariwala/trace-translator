@@ -13,7 +13,8 @@ import os
 # CONFIGURATION
 # ============================================================================
 
-MODEL_NAME = "mistral-7b"          # Options: 'phi-2', 'tinyllama', 'phi-3-mini', 'llama-2-13b', 'mistral-7b', or HF model path
+MODEL_NAME = "phi-2"               # Options: 'phi-2', 'tinyllama', 'phi-3-mini', 'llama-2-13b', 'mistral-7b', or HF model path
+                                   # Using phi-2 (2.7B) for fair comparison across all parallelism strategies
 INPUT_PROMPT = "Tell me about the corpus callosum."
 
 MAX_MEMORY_PER_GPU = {0: "12GB", 1: "12GB", 2: "12GB", 3: "12GB"}

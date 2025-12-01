@@ -22,12 +22,13 @@ import os
 # CONFIGURATION
 # ============================================================================
 
-MODEL_NAME = "mistral-7b"          # Options: 'phi-2', 'tinyllama', 'phi-3-mini', 'llama-2-13b', 'mistral-7b'
+MODEL_NAME = "phi-2"               # Options: 'phi-2', 'tinyllama', 'phi-3-mini', 'llama-2-13b', 'mistral-7b'
+                                   # Using phi-2 (2.7B) for fair comparison across all parallelism strategies
 INPUT_PROMPT = "Tell me about the corpus callosum."
 
 # Model architecture (needed for layer-specific wrapping)
 # This determines which layer names to use for parallelization
-MODEL_ARCH = "mistral"  # Options: "mistral", "llama", "phi"
+MODEL_ARCH = "phi"  # Options: "mistral", "llama", "phi"
 
 # Generation parameters
 WARMUP_TOKENS = 5              # Generate this many tokens before profiling
