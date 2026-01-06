@@ -1,0 +1,119 @@
+========================================================================================================================
+ABSTRACTION LEVELS IN LAYER 5
+========================================================================================================================
+
+PROPOSED HIERARCHY FOR NESTED TIMELINE:
+
+LEVEL 0: TRANSFORMER LAYER (Highest)
+--------------------------------------------------------------------------------
+  Description: The complete transformer layer
+  Semantic meaning: One pass through a decoder layer
+  Count: 1
+  Examples:
+    - nn.Module: PhiDecoderLayer_5
+
+LEVEL 1: FUNCTIONAL BLOCKS
+--------------------------------------------------------------------------------
+  Description: Major architectural components
+  Semantic meaning: Self-attention, feed-forward, normalization
+  Count: 3
+  Examples:
+    - nn.Module: LayerNorm_5                   (+ 0.020 ms,  0.295 ms)
+    - nn.Module: PhiAttention_5                (+ 0.324 ms,  7.254 ms)
+    - nn.Module: PhiMLP_5                      (+ 7.635 ms,  3.214 ms)
+
+LEVEL 2: NEURAL NETWORK MODULES
+--------------------------------------------------------------------------------
+  Description: Individual NN layers and operations
+  Semantic meaning: Linear layers, activations, dropout, normalization
+  Count: 9
+  Examples:
+    - nn.Module: Linear_30                     (+ 0.341 ms,  1.060 ms)
+    - nn.Module: Linear_31                     (+ 1.487 ms,  1.034 ms)
+    - nn.Module: Linear_32                     (+ 2.623 ms,  1.015 ms)
+    - nn.Module: Linear_33                     (+ 5.955 ms,  1.614 ms)
+    - nn.Module: Dropout_6                     (+ 7.586 ms,  0.043 ms)
+    - nn.Module: Linear_34                     (+ 7.643 ms,  1.088 ms)
+    - nn.Module: NewGELUActivation_5           (+ 8.737 ms,  0.430 ms)
+    - nn.Module: Linear_35                     (+ 9.176 ms,  1.671 ms)
+    - nn.Module: Dropout_6                     (+10.851 ms,  0.042 ms)
+
+LEVEL 3: PYTORCH OPERATIONS (ATen/Operators)
+--------------------------------------------------------------------------------
+  Description: PyTorch's C++ operator implementations
+  Semantic meaning: Actual mathematical operations (matmul, add, norm, etc.)
+  Count: 216
+  Subcategories:
+    Other: 109 operations
+      - aten::empty                                                  (+ 0.077 ms)
+      - aten::empty                                                  (+ 0.117 ms)
+      - aten::empty                                                  (+ 0.149 ms)
+    Tensor Manipulation: 63 operations
+      - aten::view                                                   (+ 0.200 ms)
+      - aten::view                                                   (+ 0.245 ms)
+      - aten::view_as                                                (+ 0.416 ms)
+    Element-wise Math: 17 operations
+      - aten::mul                                                    (+ 4.048 ms)
+      - aten::mul                                                    (+ 4.350 ms)
+      - aten::add                                                    (+ 4.395 ms)
+    Matrix Operations: 16 operations
+      - aten::addmm                                                  (+ 0.907 ms)
+      - aten::addmm                                                  (+ 0.978 ms)
+      - aten::addmm                                                  (+ 2.026 ms)
+    Linear/MatMul: 6 operations
+      - aten::linear                                                 (+ 0.505 ms)
+      - aten::linear                                                 (+ 1.661 ms)
+      - aten::linear                                                 (+ 2.781 ms)
+    Attention: 3 operations
+      - aten::scaled_dot_product_attention                           (+ 5.414 ms)
+      - aten::_scaled_dot_product_efficient_attention                (+ 5.431 ms)
+      - aten::_efficient_attention_forward                           (+ 5.596 ms)
+    Normalization: 2 operations
+      - aten::layer_norm                                             (+ 0.051 ms)
+      - aten::native_layer_norm                                      (+ 0.063 ms)
+
+LEVEL 4: CUDA RUNTIME
+--------------------------------------------------------------------------------
+  Description: CUDA API calls (kernel launches, memory operations)
+  Semantic meaning: Host-side GPU control operations
+  Count: 75
+  Subcategories:
+    Kernel Launch: 28 operations
+    Other: 24 operations
+    Stream Operations: 21 operations
+    Memory Copy: 2 operations
+
+LEVEL 5: GPU KERNELS (Lowest Compute)
+--------------------------------------------------------------------------------
+  Description: Actual GPU kernel executions
+  Semantic meaning: Device-side parallel computations
+  Count: 36
+  Kernel types:
+    Element-wise: 20 kernels
+      - void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunc (+10.009 ms,  0.002 ms)
+      - void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunc (+10.011 ms,  0.002 ms)
+      - void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_imp (+10.077 ms,  0.003 ms)
+    GEMM/MatMul: 7 kernels
+      - void cutlass::Kernel2<cutlass_75_wmma_tensorop_f16_s161616gemm_f16_16x (+10.021 ms,  0.018 ms)
+      - void cutlass::Kernel2<cutlass_75_wmma_tensorop_f16_s161616gemm_f16_16x (+10.039 ms,  0.019 ms)
+      - void cutlass::Kernel2<cutlass_75_wmma_tensorop_f16_s161616gemm_f16_16x (+10.059 ms,  0.017 ms)
+    Other: 6 kernels
+      - void at::native::(anonymous namespace)::CatArrayBatchedCopy<at::native (+10.085 ms,  0.003 ms)
+      - void at::native::(anonymous namespace)::CatArrayBatchedCopy<at::native (+10.101 ms,  0.003 ms)
+      - void at::native::(anonymous namespace)::CatArrayBatchedCopy<at::native (+10.110 ms,  0.003 ms)
+    Reduction: 2 kernels
+      - ncclDevKernel_AllReduce_Sum_f16_RING_LL(ncclDevKernelArgsStorage<4096u (+ 6.527 ms,  3.481 ms)
+      - ncclDevKernel_AllReduce_Sum_f16_RING_LL(ncclDevKernelArgsStorage<4096u (+10.203 ms, 11.985 ms)
+    Normalization: 1 kernels
+      - void at::native::(anonymous namespace)::vectorized_layer_norm_kernel<c (+10.014 ms,  0.006 ms)
+
+LEVEL 6: COMMUNICATION (Special Category)
+--------------------------------------------------------------------------------
+  Description: Inter-GPU communication operations
+  Semantic meaning: AllReduce for tensor parallelism
+  Count: 4
+  Examples:
+    - nccl:all_reduce                                              (gpu_user_annotation) + 6.527 ms,  3.481 ms
+    - nccl:all_reduce                                              (user_annotation) + 7.344 ms,  0.064 ms
+    - nccl:all_reduce                                              (gpu_user_annotation) +10.203 ms, 11.985 ms
+    - nccl:all_reduce                                              (user_annotation) +10.630 ms,  0.059 ms

@@ -1,0 +1,71 @@
+INPUT: [B, S, H] - Full tensor replicated on all GPUs
+│
+├─────────────────────────────────────┐
+│          ATTENTION BLOCK            │
+├─────────────────────────────────────┤
+│
+├─> Q_proj (ColwiseParallel)
+│   Input:  [B, S, H]    (full tensor)
+│   Weight: [H, H/W]     (each GPU has H/W columns)
+│   Output: [B, S, H/W]  (partial - each GPU has different heads)
+│
+├─> K_proj (ColwiseParallel)  
+│   Input:  [B, S, H]    (full tensor)
+│   Weight: [H, H/W]     (each GPU has H/W columns)
+│   Output: [B, S, H/W]  (partial - each GPU has different heads)
+│
+├─> V_proj (ColwiseParallel)
+│   Input:  [B, S, H]    (full tensor)
+│   Weight: [H, H/W]     (each GPU has H/W columns)
+│   Output: [B, S, H/W]  (partial - each GPU has different heads)
+│
+├─> Reshape to [B, S, N/W, D] on each GPU
+│
+├─> Scaled Dot-Product Attention (independent per GPU)
+│   Q: [B, N/W, S, D]
+│   K: [B, N/W, S, D]  
+│   V: [B, N/W, S, D]
+│   Output: [B, N/W, S, D] → reshape to [B, S, H/W]
+│
+├─> O_proj (RowwiseParallel)
+│   Input:  [B, S, H/W]  (partial - different on each GPU)
+│   Weight: [H/W, H]     (each GPU has H/W rows)
+│   Output: [B, S, H]    (partial - each GPU has 1/W of full result)
+│
+├─> *** ALLREDUCE #1 *** (SUM across GPUs)
+│   Input:  [B, S, H] (partial on each GPU)
+│   Output: [B, S, H] (complete - same on all GPUs)
+│   >>> COMMUNICATION BOTTLENECK <<<
+│
+├─> Residual Connection: [B, S, H] + [B, S, H]
+│
+└─> LayerNorm: [B, S, H]
+    │
+    ├────────────────────────────────────┐
+    │            MLP BLOCK               │
+    ├────────────────────────────────────┤
+    │
+    ├─> FC1 (ColwiseParallel)
+    │   Input:  [B, S, H]    (full tensor)
+    │   Weight: [H, F/W]     (each GPU has F/W columns)
+    │   Output: [B, S, F/W]  (partial - each GPU has different features)
+    │
+    ├─> SiLU/GELU Activation (element-wise on partial)
+    │   [B, S, F/W]
+    │
+    ├─> FC2 (RowwiseParallel)
+    │   Input:  [B, S, F/W]  (partial - different on each GPU)
+    │   Weight: [F/W, H]     (each GPU has F/W rows)
+    │   Output: [B, S, H]    (partial - each GPU has 1/W of full result)
+    │
+    ├─> *** ALLREDUCE #2 *** (SUM across GPUs)
+    │   Input:  [B, S, H] (partial on each GPU)
+    │   Output: [B, S, H] (complete - same on all GPUs)
+    │   >>> COMMUNICATION BOTTLENECK <<<
+    │
+    ├─> Residual Connection: [B, S, H] + [B, S, H]
+    │
+    └─> LayerNorm: [B, S, H]
+        │
+        └──> OUTPUT: [B, S, H] - Full tensor replicated on all GPUs
+                     (becomes input to next layer)
