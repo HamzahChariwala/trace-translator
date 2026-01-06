@@ -260,13 +260,17 @@ class ModelLoader:
         pipeline = pipeline.to(self.device)
         return pipeline, None
     
-    def load_reasoning_model(self, model_name: str = "phi-2") -> Tuple[Any, Any]:
+    def load_reasoning_model(self, model_name: str = "phi-2", device_map: Optional[str] = None) -> Tuple[Any, Any]:
         """
         Load a small reasoning/LLM model.
         
         Args:
             model_name: Name of the model to load
                 Options: 'phi-2', 'tinyllama', 'phi-3-mini'
+            device_map: Optional device map for model parallelism
+                - None: Use single device (self.device)
+                - "auto": Automatically distribute across available GPUs
+                - dict: Custom device mapping
         
         Returns:
             Tuple of (model, tokenizer)
@@ -287,14 +291,27 @@ class ModelLoader:
         hf_model_name = model_map[model_name]
         
         tokenizer = AutoTokenizer.from_pretrained(hf_model_name, trust_remote_code=True)
-        model = AutoModelForCausalLM.from_pretrained(
-            hf_model_name,
-            dtype=torch.float16 if self.device != "cpu" else torch.float32,
-            trust_remote_code=True,
-            use_safetensors=True
-        )
         
-        model = model.to(self.device)
+        # Load model with optional device mapping for model parallelism
+        if device_map is not None:
+            print(f"Using device_map: {device_map}")
+            model = AutoModelForCausalLM.from_pretrained(
+                hf_model_name,
+                torch_dtype=torch.float16 if self.device != "cpu" else torch.float32,
+                trust_remote_code=True,
+                use_safetensors=True,
+                device_map=device_map,
+                low_cpu_mem_usage=True
+            )
+        else:
+            model = AutoModelForCausalLM.from_pretrained(
+                hf_model_name,
+                torch_dtype=torch.float16 if self.device != "cpu" else torch.float32,
+                trust_remote_code=True,
+                use_safetensors=True
+            )
+            model = model.to(self.device)
+        
         model.eval()
         return model, tokenizer
     
